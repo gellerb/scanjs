@@ -12,26 +12,72 @@ scanjsModule.controller('ScanCtrl', ['$scope', 'ScanSvc', function ScanCtrl($sco
     styleActiveLine: true
   });
   }
-  $scope.codeMirrorManual = undefined;
-  $scope.inputFiles = [];
-  $scope.results=[];
-  $scope.errors=[];
-  $scope.filteredResults=[];
-  $scope.inputFilename="";
-  $scope.issueList=[];
-  $scope.throbInput = false;
-  $scope.throbOutput = false;
 
+  $scope.resetAllParams = function() {
+    $scope.codeMirrorManual = undefined;
+    $scope.results = [];
+    $scope.errors = [];
+    $scope.filteredResults = [];
+    $scope.issueList = [];
+    $scope.throbInput = false;
+    $scope.throbOutput = false;
+  }
+  $scope.inputFiles = [];
+  $scope.loadFiles = [];
+  $scope.inputFilename = "";
+  $scope.loadFilename = "";
+  $scope.resetAllParams();
   var pending = 0;
   var selectedFile = 0;
   var codeMirror_index = 0;
 
   document.getElementById("scan-file-input").addEventListener("change", function(evt) {
-    $scope.handleFileUpload(this.files);
+    $scope.handleFileUpload(this.files, false);
+  });
+  document.getElementById("load-file-input").addEventListener("change", function(evt) {
+    $scope.handleFileUploadForLoad(this.files);
+  });
+  document.getElementById("load-zip-input").addEventListener("change", function(evt) {
+    $scope.handleFileUpload(this.files, true);
   });
 
+  $scope.load = function(source, filename) {
+    $scope.resetAllParams();
+    $scope.results = JSON.parse($scope.loadFiles[0].data);
+    $scope.parseLoadedResults();
+    $scope.errors = [];
+    $scope.throbOutput = true;
+    $scope.matchFileNameFromJSONToZip();
+    //update UI
+    document.querySelector("#scan-input").classList.toggle("hidden", true);
+    document.querySelector("#scan-results").classList.toggle("hidden", false);
+    document.querySelector("#scan-output-rules").classList.toggle("hidden", false);
+    document.querySelector("#scan-output-files").classList.toggle("hidden", false);
+
+    //update navbar
+    document.querySelector("#scan-input-nav").classList.toggle("active", false);
+    document.querySelector("#scan-output-nav").classList.toggle("active", true);
+    $scope.throbOutput = false;
+    $scope.updateIssueList();
+    $scope.navShowOutput();
+  }
+
+  $scope.parseLoadedResults = function() {
+    var filesList = [];
+    var newResults = [];
+    for (var fileLoc in $scope.results) {
+      filesList.push(fileLoc);
+      if ($scope.results.hasOwnProperty(fileLoc)) {
+        newResults.push($scope.results[fileLoc]);
+      }
+    }
+    $scope.results = newResults.reduce(function(a, b) {
+      return a.concat(b);
+    });
+  }
   $scope.run = function (source, filename) {
     //empty last scan
+    $scope.resetAllParams();
     $scope.results=[];
     $scope.errors=[];
     $scope.inputFiles.forEach(function (scriptFile, i) {
@@ -41,16 +87,18 @@ scanjsModule.controller('ScanCtrl', ['$scope', 'ScanSvc', function ScanCtrl($sco
         ScanSvc.newScan(scriptFile.name,scriptFile.asText());
       }
     });
-
     //update UI
     document.querySelector("#scan-input").classList.toggle("hidden",true);
     document.querySelector("#scan-results").classList.toggle("hidden",false);
     document.querySelector("#scan-output-rules").classList.toggle("hidden", false);
     document.querySelector("#scan-output-files").classList.toggle("hidden", false);
-
     //update navbar
     document.querySelector("#scan-input-nav").classList.toggle("active",false);
     document.querySelector("#scan-output-nav").classList.toggle("active",true);
+  }
+
+  $scope.fileNameToDirectoryLocation = function(filename) {
+    return filename.replace("=", "/");
   }
 
   $scope.updateIssueList = function(){
@@ -104,7 +152,7 @@ scanjsModule.controller('ScanCtrl', ['$scope', 'ScanSvc', function ScanCtrl($sco
     $scope.filterResults(filterIssue);
   }
 
-  $scope.handleFileUpload = function handleFileUpload(fileList) {
+  $scope.handleFileUpload = function handleFileUpload(fileList, isZipToLoad) {
     function handleMaybeZip() {
       //packaged app case
       var reader = new FileReader();
@@ -133,7 +181,6 @@ scanjsModule.controller('ScanCtrl', ['$scope', 'ScanSvc', function ScanCtrl($sco
 
       for (var i = 0; i < fileList.length; i++) {
         var file = fileList[i];
-        console.log('adding file:',file.name)
         if (!file.type.match(jsType)) {
           console.log("Ignoring non-js file:" + file.name + "(" + file.type + ")")
         }
@@ -162,12 +209,58 @@ scanjsModule.controller('ScanCtrl', ['$scope', 'ScanSvc', function ScanCtrl($sco
     //enable fileselect div
     //document.querySelector("#scan-intro").classList.toggle("hidden",true);
     document.querySelector("#scan-files-selected").classList.toggle("hidden",false);
-
+    if (isZipToLoad) {
+      document.querySelector("#load-file-selected").classList.toggle("hidden", false);
+      document.querySelector("#scan-files-selected").classList.toggle("hidden", true);
+      document.querySelector("#load-zip-selected").classList.toggle("hidden", false);
+    } else {
+      document.querySelector("#scan-files-selected").classList.toggle("hidden", false);
+      document.querySelector("#load-file-selected").classList.toggle("hidden", true);
+      document.querySelector("#load-zip-selected").classList.toggle("hidden", true);
+    }
     if (fileList.length === 1) {
       handleMaybeZip();
     }
     else {
       handleList();
+    }
+    $scope.throbInput = false;
+    $scope.$apply();
+  }
+
+  $scope.handleFileUploadForLoad = function handleFileUploaForLoad(fileList) {
+    function handleList() {
+      $scope.loadFilename = "Single file";
+      for (var i = 0; i < fileList.length; i++) {
+        var file = fileList[i];
+        var reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = (function(file) {
+          var fileName = file.name;
+          return function(e) {
+            $scope.loadFiles = [{
+              name: file.name,
+              data: reader.result
+            }]; //returns an array of files
+            $scope.$apply();
+          };
+        })(file)
+
+        reader.onerror = function(e) {
+          $scope.error = "Could not read file";
+          $scope.$apply();
+        }
+      }
+    };
+    $scope.throbInput = true;
+    $scope.$apply();
+    document.querySelector("#load-file-selected").classList.toggle("hidden", false);
+    document.querySelector("#scan-files-selected").classList.toggle("hidden", true);
+    document.querySelector("#load-zip-selected").classList.toggle("hidden", true);
+    if (fileList.length === 1) {
+      handleList();
+    } else {
+      $scope.error("Invalid file type for load")
     }
     $scope.throbInput = false;
     $scope.$apply();
@@ -185,17 +278,38 @@ scanjsModule.controller('ScanCtrl', ['$scope', 'ScanSvc', function ScanCtrl($sco
       $scope.codeMirror.setValue($scope.inputFiles[index].asText());
     }
     codeMirror_index = index;
-    document.querySelector("#filename-badge").textContent = $scope.inputFiles[index].name;
+    document.querySelector("#filename-badge").textContent = $scope.fileNameToDirectoryLocation($scope.inputFiles[index].name);
+    $scope.codeMirror.setCursor(0,0);
+    $scope.codeMirror.focus();
   }
 
   $scope.showResult = function (filename,line, col) {
     document.querySelector("#code-mirror-wrapper").classList.toggle("hidden",false);
-    document.querySelector("#filename-badge").textContent = filename;
+    document.querySelector("#filename-badge").textContent = $scope.fileNameToDirectoryLocation(filename);
     var file = $scope.inputFiles.find(function(f){return f.name === filename});
     $scope.codeMirror.setValue(file.asText());
     $scope.codeMirror.setCursor(line - 1, col || 0);
     $scope.codeMirror.focus();
-  };
+  }
+
+  $scope.getFullPath = function(obj) {
+    console.log("fullPath obj print: " + JSON.stringify(obj, null, 2));
+    if (obj.hasOwnProperty("fullpath")) {
+        return obj["fullpath"];
+    } else {
+        return obj["filename"];
+    }
+  }
+
+  $scope.matchFileNameFromJSONToZip = function() {
+    for (var i = 0; i < $scope.results.length; i++) {
+      $scope.results[i]["fullpath"] = $scope.results[i]["filename"];
+      var temp = $scope.results[i]["filename"].match(/(\w+)(\\|\/)(\w+)(\.js)/g);
+      if (temp !== null) {
+       $scope.results[i]["filename"] = temp[0].replace(/\\|\//g, "=");
+      }
+    }
+  }
 
   $scope.saveState = function() {
     var includedAttributes = ['line','filename','rule', 'desc', 'name', 'rec','type'];
