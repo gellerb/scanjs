@@ -23,7 +23,18 @@ child_process.exec()
 
 * Detect Self-Signed Certificates
 ```js
-NODE_TLS_REJECT_UNAUTHORIZED
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+```
+* Below source rule matches both `foo.bar.flag=0` & `foo.bar.flag=1`
+```js
+  {
+    "name": "self signed cert",
+    "source": "process.env.NODE_TLS_REJECT_UNAUTHORIZED='0'",
+    "testhit": "require('child_process').exec;",
+    "testmiss": "",
+    "desc": "TODO",
+    "threat": ""
+  }
 ```
 
 * Handlebars
