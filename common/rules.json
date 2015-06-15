@@ -862,5 +862,37 @@
     "testmiss": "if(x==y){x=0;}",
     "desc": "Unintended use of AssignmentExpression in If Statement",
     "threat": "Typo"
+  },
+  {
+    "name": "createHash md5",
+    "source": "$_any.createHash('md5')",
+    "testhit": "crypto.createHash('md5')",
+    "testmiss": "",
+    "desc": "Usage of MD5",
+    "threat": ""
+  },
+  {
+    "name": "createHash sha1",
+    "source": "$_any.createHash('sha1')",
+    "testhit": "crypto.createHash('sha1')",
+    "testmiss": "",
+    "desc": "Usage of SHA1",
+    "threat": ""
+  },
+  {
+    "name": "createHash md5",
+    "source": "createHash('md5')",
+    "testhit": "createHash('md5')",
+    "testmiss": "",
+    "desc": "Usage of MD5",
+    "threat": ""
+  },
+  {
+    "name": "createHash sha1",
+    "source": "createHash('sha1')",
+    "testhit": "createHash('sha1')",
+    "testmiss": "",
+    "desc": "Usage of SHA1",
+    "threat": ""
   }
 ]
