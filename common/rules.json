@@ -894,5 +894,21 @@
     "testmiss": "",
     "desc": "Usage of SHA1",
     "threat": ""
+  },
+  {
+    "name": "os command injection",
+    "source": "child_process.exec($_any)",
+    "testhit": "child_process.exec('ls -l ' + user_input)",
+    "testmiss": "",
+    "desc": "Calling child_process.exec() with a first argument as string (or string concatenation) with user input may lead to OS command injection.",
+    "threat": ""
+  },
+  {
+    "name": "os command injection - direct require() load",
+    "source": "require('child_process').exec",
+    "testhit": "require('child_process').exec;",
+    "testmiss": "",
+    "desc": "Calling child_process.exec() with a first argument as string (or string concatenation) with user input may lead to OS command injection.",
+    "threat": ""
   }
 ]
