@@ -8,16 +8,16 @@ var path = require('path');
 var beautify = require('js-beautify').js_beautify;
 var JSZip = require("jszip");
 
-var parser = require(__dirname+ '/client/js/lib/acorn.js');
+var parser = require(__dirname + '/client/js/lib/acorn.js');
 var ScanJS = require(__dirname + '/common/scan');
 
 var signatures = JSON.parse(fs.readFileSync(__dirname + "/common/rules.json", "utf8"));
-var createZip = true;
+var createZip = false;
 
 ScanJS.parser(parser);
 ScanJS.loadRules(signatures);
 
-var argv = require('optimist').usage('Usage: $node scan.js -t [path/to/app] -o [resultFile.json] -zip').demand(['t']).argv;
+var argv = require('optimist').usage('Usage: $node scan.js -t [path/to/app] -o [resultFile.json] --zip').demand(['t']).argv;
 
 var dive = function(dir, action) {
   if( typeof action !== 'function') {
@@ -42,9 +42,9 @@ var dive = function(dir, action) {
 };
 
 var directoryNameToFileLocation = function(filename) {
-    filename = filename.match(/(\w+)(\\|\/)(\w+)(\.js)/g)[0];
-    filename = filename.replace(/\\|\//g, "=");
-    return filename;
+  filename = filename.match(/(\w+)(\\|\/)(\w+)(\.js)/g)[0];
+  filename = filename.replace(/\\|\//g, "=");
+  return filename;
 };
 
 var writeReport = function(results, name) {
@@ -61,7 +61,9 @@ var writeReport = function(results, name) {
 };
 
 var downloadZip = function(zipfile, filename) {
-  var buffer = zipfile.generate({type:"nodebuffer"});
+  var buffer = zipfile.generate({
+    type: "nodebuffer"
+  });
   fs.writeFile(filename, buffer, function(err) {
     if (err) {
       console.log(err);
@@ -77,6 +79,7 @@ if( typeof process != 'undefined' && process.argv[2]) {
   results = {};
   reportname = argv.o ? argv.o : 'scanresults';
   reportdir = reportname + "_files";
+  createZip = argv.zip ? argv.zip : false;
   if(fs.existsSync(reportname) || fs.existsSync(reportdir)) {
     console.log("Error:output file or dir already exists (" + reportname + "). Supply a different name using: -o [filename]")
   } 
@@ -96,7 +99,7 @@ if( typeof process != 'undefined' && process.argv[2]) {
         if (scanresult.type == 'error') {
           console.log("SKIPPING FILE: Error in "+ fullpath+", at Line "+ scanresult.error.loc.line +", Column "+scanresult.error.loc.column+ ": " + scanresult.error.message);
         }
-        if(scanresult.length > 0){
+        if (scanresult.length > 0) {
           if (scanresult[0]["type"] == 'finding') {
             var fileToZipName = directoryNameToFileLocation(scanresult.filename);
             zip.file(fileToZipName, content);
@@ -118,8 +121,7 @@ if( typeof process != 'undefined' && process.argv[2]) {
       }
     }
     writeReport(results, reportname + '.JSON');
-    if(createZip === true)
-    {
+    if (createZip === true) {
       downloadZip(zip, reportname + '.zip');
     }
   }
