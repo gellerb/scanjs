@@ -6,16 +6,18 @@
 var fs = require('fs');
 var path = require('path');
 var beautify = require('js-beautify').js_beautify;
+var JSZip = require("jszip");
 
 var parser = require(__dirname+ '/client/js/lib/acorn.js');
 var ScanJS = require(__dirname + '/common/scan');
 
 var signatures = JSON.parse(fs.readFileSync(__dirname + "/common/rules.json", "utf8"));
+var createZip = true;
 
 ScanJS.parser(parser);
 ScanJS.loadRules(signatures);
 
-var argv = require('optimist').usage('Usage: $node scan.js -t [path/to/app] -o [resultFile.json]').demand(['t']).argv;
+var argv = require('optimist').usage('Usage: $node scan.js -t [path/to/app] -o [resultFile.json] -zip').demand(['t']).argv;
 
 var dive = function(dir, action) {
   if( typeof action !== 'function') {
@@ -38,6 +40,13 @@ var dive = function(dir, action) {
     }
   });
 };
+
+var directoryNameToFileLocation = function(filename) {
+    filename = filename.match(/(\w+)(\\|\/)(\w+)(\.js)/g)[0];
+    filename = filename.replace(/\\|\//g, "=");
+    return filename;
+};
+
 var writeReport = function(results, name) {
   if(fs.existsSync(name)) {
     console.log("Error:output file already exists (" + name + "). Supply a different name using: -o [filename]")
@@ -51,6 +60,18 @@ var writeReport = function(results, name) {
   });
 };
 
+var downloadZip = function(zipfile, filename) {
+  var buffer = zipfile.generate({type:"nodebuffer"});
+  fs.writeFile(filename, buffer, function(err) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log("The zip file containing vulnerable files was saved to " + filename);
+    }
+  });
+};
+
+var zip = new JSZip();
 
 if( typeof process != 'undefined' && process.argv[2]) {
   results = {};
@@ -58,7 +79,6 @@ if( typeof process != 'undefined' && process.argv[2]) {
   reportdir = reportname + "_files";
   if(fs.existsSync(reportname) || fs.existsSync(reportdir)) {
     console.log("Error:output file or dir already exists (" + reportname + "). Supply a different name using: -o [filename]")
-
   } 
   else {
     fs.mkdirSync(reportdir);
@@ -73,8 +93,16 @@ if( typeof process != 'undefined' && process.argv[2]) {
         var ast = parser.parse(content, { locations: true });
 
         var scanresult = ScanJS.scan(ast, fullpath);
+        console.log("scanresult type: "+ scanresult.type);
+        console.log("scanresult filename: "+ scanresult.filename);
+        console.log("scanresult: " + JSON.stringify(scanresult, null,2));
         if (scanresult.type == 'error') {
           console.log("SKIPPING FILE: Error in "+ fullpath+", at Line "+ scanresult.error.loc.line +", Column "+scanresult.error.loc.column+ ": " + scanresult.error.message);
+        }
+        if (true){//scanresult.type == 'finding') {
+          var fileToZipName = directoryNameToFileLocation(scanresult.filename);
+          zip.file(fileToZipName, content);
+          console.log("File " + fileToZipName + " was added to the zip.");
         }
         results[fullpath] = scanresult;
       }
@@ -92,6 +120,10 @@ if( typeof process != 'undefined' && process.argv[2]) {
       }
     }
     writeReport(results, reportname + '.JSON');
+    if(createZip === true)
+    {
+      downloadZip(zip, reportname + '.zip');
+    }
   }
 } else {
   console.log('usage: $ node scan.js path/to/app ')
