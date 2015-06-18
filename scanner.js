@@ -93,16 +93,14 @@ if( typeof process != 'undefined' && process.argv[2]) {
         var ast = parser.parse(content, { locations: true });
 
         var scanresult = ScanJS.scan(ast, fullpath);
-        console.log("scanresult type: "+ scanresult.type);
-        console.log("scanresult filename: "+ scanresult.filename);
-        console.log("scanresult: " + JSON.stringify(scanresult, null,2));
         if (scanresult.type == 'error') {
           console.log("SKIPPING FILE: Error in "+ fullpath+", at Line "+ scanresult.error.loc.line +", Column "+scanresult.error.loc.column+ ": " + scanresult.error.message);
         }
-        if (true){//scanresult.type == 'finding') {
-          var fileToZipName = directoryNameToFileLocation(scanresult.filename);
-          zip.file(fileToZipName, content);
-          console.log("File " + fileToZipName + " was added to the zip.");
+        if(scanresult.length > 0){
+          if (scanresult[0]["type"] == 'finding') {
+            var fileToZipName = directoryNameToFileLocation(scanresult.filename);
+            zip.file(fileToZipName, content);
+          }
         }
         results[fullpath] = scanresult;
       }
