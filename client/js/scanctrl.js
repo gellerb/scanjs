@@ -98,7 +98,7 @@ scanjsModule.controller('ScanCtrl', ['$scope', 'ScanSvc', function ScanCtrl($sco
   }
 
   $scope.fileNameToDirectoryLocation = function(filename) {
-    return filename.replace("=", "/");
+    return filename.replace(/\=/g, "/");
   }
 
   $scope.updateIssueList = function(){
@@ -304,9 +304,9 @@ scanjsModule.controller('ScanCtrl', ['$scope', 'ScanSvc', function ScanCtrl($sco
   $scope.matchFileNameFromJSONToZip = function() {
     for (var i = 0; i < $scope.results.length; i++) {
       $scope.results[i]["fullpath"] = $scope.results[i]["filename"];
-      var temp = $scope.results[i]["filename"].match(/(\w+)(\\|\/)(\w+)(\.js)/g);
+      var temp = $scope.results[i]["filename"];
       if (temp !== null) {
-       $scope.results[i]["filename"] = temp[0].replace(/\\|\//g, "=");
+       $scope.results[i]["filename"] = temp.replace(/\\|\//g, "=");
       }
     }
   }

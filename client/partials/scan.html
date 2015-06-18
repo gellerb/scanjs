@@ -108,7 +108,6 @@
                         <th><a href="" ng-click="predicate = 'filename'; reverse=!reverse">Filename</a></th>
                         <th><a href="" ng-click="predicate = 'line'; reverse=!reverse">Line</a></th>
                         <th><a href="" ng-click="predicate = 'rule.name'; reverse=!reverse">Rule</a></th>
-                        <th><a href="" ng-click="predicate_e = 'fullpath'; reverse=!reverse">Known File Path</a></th>
                         <!--<th>Description of Issue</th>-->
                     </tr>
                     </thead>
@@ -116,7 +115,6 @@
                         <td>{{fileNameToDirectoryLocation(result.filename)}}</td>
                         <td><a ng-click="showResult(result.filename,result.line, result.col)">Line {{result.line}}</a></td>
                         <td>{{result.rule.name }}</td>
-                        <td>{{fileNameToDirectoryLocation(getFullPath(result))}}</td>
                         <!-- <td>{{result.rule.desc}}</a>-->
                         </td>
                     </tr>

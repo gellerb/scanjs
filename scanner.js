@@ -42,8 +42,12 @@ var dive = function(dir, action) {
 };
 
 var directoryNameToFileLocation = function(filename) {
-  filename = filename.match(/(\w+)(\\|\/)(\w+)(\.js)/g)[0];
+  try{
   filename = filename.replace(/\\|\//g, "=");
+  }
+  catch (e) {
+    console.log("Error with filename creation");
+  }
   return filename;
 };
 
