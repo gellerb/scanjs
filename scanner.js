@@ -87,7 +87,7 @@ var readIgnoreFile = function() {
   ignoreContent = fs.readFileSync(ignoreFile, 'utf8').toString().split(/\r\n|\n/g).filter(function(e) {
     return e !== '';
   });;
-  console.log("ignoreAst: " + JSON.stringify(ignoreContent, null, 2));
+  console.log("ignore list: " + JSON.stringify(ignoreContent, null, 2));
 }
 
 var parseIgnoreFile = function(){
@@ -95,7 +95,7 @@ var parseIgnoreFile = function(){
   while( i < ignoreContent.length ){
     var stringToParse = ignoreContent[i];
     if(stringToParse.substring(0,2) == './'){
-      stringToParse = "//" + stringToParse.substring(2);
+      stringToParse = stringToParse.replace('.', argv.t);
       ignoreContent[i] = stringToParse;
       i++;
     }
@@ -111,11 +111,11 @@ var parseIgnoreFile = function(){
       }
     }
     else if(stringToParse.substring(0,1) == '/'){
-      ignoreContent[i] = stringToParse;
-      i++;
+        ignoreContent[i] = stringToParse;
+        i++;
     } else{
       ignoreContent.splice(i,1);
-    } 
+    }
   }
   //DEBUG
   console.log(JSON.stringify(ignoreContent, null, 2));
@@ -130,7 +130,7 @@ var ignoreThisPath = function(filepath) {
       }
       else {
         //DEBUG:
-        console.log("filepath ignored: " + filepath);
+        console.log("IGNORE: skipping file " + filepath);
         return true;
       }
     }
@@ -149,37 +149,31 @@ if (typeof process != 'undefined' && process.argv[2]) {
   readIgnoreFile();
   parseIgnoreFile();
   if(fs.existsSync(reportname) || fs.existsSync(reportdir)) {
-    console.log("Error:output file or dir already exists (" + reportname + "). Supply a different name using: -o [filename]");
+    console.log("Error: output file or dir already exists (" + reportname + "). Supply a different name using: -o [filename]");
   }
   else {
     fs.mkdirSync(reportdir);
     dive(argv.t, function(file, fullpath) {
       var ext = path.extname(file.toString());
-
-      if(ext == '.js') {
+      // DEBUG
+      console.log("file to scan: " + fullpath);
+      if(ext == '.js' && !ignoreThisPath(fullpath)) {
         var content = fs.readFileSync(fullpath, 'utf8');
         //beautify source so result snippet is meaningful
         var content = beautify(content, { indent_size: 2 });
 
         var ast = parser.parse(content, { locations: true });
-        // DEBUG
-        console.log("file to scan: " + fullpath);
-        if (!ignoreThisPath(fullpath)) {
-          var scanresult = ScanJS.scan(ast, fullpath);
-
-          if (scanresult.length > 0) {
-            if (scanresult[0]["type"] == 'error') {
-              console.log("SKIPPING FILE: Error in " + fullpath + ", at Line " + scanresult.error.loc.line + ", Column " + scanresult.error.loc.column + ": " + scanresult.error.message);
-            }
-            if (scanresult[0]["type"] == 'finding') {
-              var fileToZipName = filePathToFileNameForZip(scanresult.filename);
-              zip.file(fileToZipName, content);
-            }
+        var scanresult = ScanJS.scan(ast, fullpath);
+        if (scanresult.length > 0) {
+          if (scanresult[0]["type"] == 'error') {
+            console.log("SKIPPING FILE: Error in " + fullpath + ", at Line " + scanresult.error.loc.line + ", Column " + scanresult.error.loc.column + ": " + scanresult.error.message);
           }
-          results[fullpath] = scanresult;
-        } else {
-          console.log("This file was ignored: " + fullpath);
+          if (scanresult[0]["type"] == 'finding') {
+            var fileToZipName = filePathToFileNameForZip(scanresult.filename);
+            zip.file(fileToZipName, content);
+          }
         }
+        results[fullpath] = scanresult;
       }
     });
     // Flatten report file to remove files with no findings and tests with no results (i.e. empty arr)
