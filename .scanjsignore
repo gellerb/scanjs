@@ -1,0 +1,12 @@
+#/Users/anandkapadia/Desktop/AutomateScanTest//gui
+#/Users/anandkapadia/Desktop/AutomateScanTest//foo/bar
+
+./product/production/rdk/write/pick-list/tests/integration-tests/
+*integration-tests*
+#./product/production/rdk/write/pick-list/tests/foointegration-testsbar/
+
+./product/production/rdk/node_modules/
+*/node_modules/*
+
+/full/path/to/product/production/rdk/jasmine-tests
+
