@@ -46,22 +46,22 @@ var dive = function(dir, action) {
 var filePathToFileNameForZip = function(filename) {
   try {
     // enables integration of JSON results and the vulnerable ZIP in the Web GUI, linking filenames to fullpaths
-    filename = filename.replace(/\\|\//g, "="); 
+    filename = filename.replace(/\\|\//g, "=");
   } catch (e) {
-    console.log("Error: filepath could not be converted to a valid filename for the zip.");
+    console.log("ERROR: filepath could not be converted to a valid filename for the zip.");
   }
   return filename;
 };
 
 var writeReport = function(results, name) {
   if(fs.existsSync(name)) {
-    console.log("Error:output file already exists (" + name + "). Supply a different name using: -o [filename]");
+    console.log("ERROR: output file already exists (" + name + "). Supply a different name using: -o [filename]");
   }
   fs.writeFile(name, JSON.stringify(results), function(err) {
     if(err) {
       console.log(err);
     } else {
-      console.log("The scan results were saved to " + name);
+      console.log("INFO: The scan results were saved to " + name);
     }
   });
 };
@@ -74,54 +74,75 @@ var downloadZip = function(zipFile, filename) { //camel
     if (err) {
       console.log(err);
     } else {
-      console.log("The zip file containing vulnerable files was saved to " + filename);
+      console.log("INFO: The zip file containing vulnerable files was saved to " + filename);
     }
   });
 };
 
 var readIgnoreFile = function() {
+  if (argv.ignore === true) {
+    ignoreFile = '.scanjsignore';
+  } else if (argv.ignore == null) {
+    return;
+  } else {
+    ignoreFile = argv.ignore;
+  }
+
   if (!fs.existsSync(ignoreFile)) {
-    console.log("Error: Invalid Ignore File. Supply a valid ignore file using --ignore [ignoreFileName]");
+    console.log("ERROR: Invalid Ignore File. Supply a valid ignore file using --ignore [ignoreFileName]");
     return;
   }
   ignoreContent = fs.readFileSync(ignoreFile, 'utf8').toString().split(/\r\n|\n/g).filter(function(e) {
     return e !== '';
-  });;
-  //DEBUG
-  //console.log("ignore list: " + JSON.stringify(ignoreContent, null, 2));
+  });
+  parseIgnoreFile();
 }
 
-var parseIgnoreFile = function(){
+var handleDotSlash = function (content, index){
+  if (content.substring(0, 2) == './') {
+    content = content.replace('.', argv.t);
+    content = content.replace('//', '/');
+    ignoreContent[index] = content;
+    return true;
+  }
+  return false;
+}
+
+var handleWildcard = function(content, index){
+  if (content.substring(0, 1) == '*') {
+    content = content.substring(1);
+    content = content.substring(0, content.indexOf('*'));
+    if (content == '') {
+      ignoreContent.splice(i, 1);
+      return 'delete';
+    } else {
+      ignoreContent[index] = content;
+    }
+    return true;
+  }
+  return false;
+}
+
+var handleFullPath = function(content, index){
+  if (content.substring(0, 1) == '/') {
+      ignoreContent[index] = content;
+      return true;
+  }
+  return false;
+}
+var parseIgnoreFile = function() {
   var i = 0;
-  while( i < ignoreContent.length ){
-    var stringToParse = ignoreContent[i];
-    if(stringToParse.substring(0,2) == './'){
-      stringToParse = stringToParse.replace('.', argv.t);
-      stringToParse = stringToParse.replace('//', '/');
-      ignoreContent[i] = stringToParse;
+  while (i < ignoreContent.length) {
+    var stringToParse = ignoreContent[i].replace('//', '/');
+    if( handleDotSlash(stringToParse, i) || handleFullPath(stringToParse, i) || handleWildcard(stringToParse, i) == true){
       i++;
     }
-    else if(stringToParse.substring(0,1) == '*'){
-      stringToParse = stringToParse.substring(1);
-      stringToParse = stringToParse.substring(0, stringToParse.indexOf('*'));
-      if(stringToParse == '')
-      {
-        console.log("Error: only one instance of * found in ignore file at: " + ignoreContent[i]);
-        ignoreContent.splice(i,1);
-      } else{
-        ignoreContent[i] = stringToParse;
-        i++;
-      }
-    }
-    else if(stringToParse.substring(0,1) == '/'){
-        ignoreContent[i] = stringToParse;
-        i++;
-    } else{
-      ignoreContent.splice(i,1);
+    else{
+      ignoreContent.splice(i, 1);
     }
   }
   //DEBUG
-  console.log("Parsed ignore file: \n" + JSON.stringify(ignoreContent, null, 2));
+  console.log("IGNORE: \n" + JSON.stringify(ignoreContent, null, 2));
 }
 
 var ignoreThisPath = function(filepath) {
@@ -129,10 +150,9 @@ var ignoreThisPath = function(filepath) {
   for (var i = 0; i < ignoreContent.length; i++) {
     var index = filepath.indexOf(ignoreContent[i]);
     if (index > -1) {
-      if(ignoreContent[i].substring(0,1) == '/'){
-        return index==0;
-      }
-      else {
+      if (ignoreContent[i].substring(0, 1) == '/') {
+        return index == 0;
+      } else {
         //DEBUG:
         //console.log("IGNORE: skipping file " + filepath);
         return true;
@@ -146,14 +166,14 @@ var zip = new JSZip();
 
 if (typeof process != 'undefined' && process.argv[2]) {
   results = {};
+  //grab arguments from CLI
   reportname = argv.o ? argv.o : 'scanresults';
   reportdir = reportname + "_files";
   createZip = argv.zip;
-  ignoreFile = argv.ignore ? argv.ignore : '.scanjsignore';
   readIgnoreFile();
-  parseIgnoreFile();
-  if(fs.existsSync(reportname) || fs.existsSync(reportdir)) {
-    console.log("Error: output file or dir already exists (" + reportname + "). Supply a different name using: -o [filename]");
+
+  if (fs.existsSync(reportname) || fs.existsSync(reportdir)) {
+    console.log("ERROR: output file or dir already exists (" + reportname + "). Supply a different name using: -o [filename]");
   }
   else {
     fs.mkdirSync(reportdir);
