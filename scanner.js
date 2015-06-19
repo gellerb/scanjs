@@ -87,7 +87,8 @@ var readIgnoreFile = function() {
   ignoreContent = fs.readFileSync(ignoreFile, 'utf8').toString().split(/\r\n|\n/g).filter(function(e) {
     return e !== '';
   });;
-  console.log("ignore list: " + JSON.stringify(ignoreContent, null, 2));
+  //DEBUG
+  //console.log("ignore list: " + JSON.stringify(ignoreContent, null, 2));
 }
 
 var parseIgnoreFile = function(){
@@ -96,18 +97,20 @@ var parseIgnoreFile = function(){
     var stringToParse = ignoreContent[i];
     if(stringToParse.substring(0,2) == './'){
       stringToParse = stringToParse.replace('.', argv.t);
+      stringToParse = stringToParse.replace('//', '/');
       ignoreContent[i] = stringToParse;
       i++;
     }
     else if(stringToParse.substring(0,1) == '*'){
       stringToParse = stringToParse.substring(1);
-      try{
-        stringToParse = stringToParse.substring(0, stringToParse.indexOf('*'));
+      stringToParse = stringToParse.substring(0, stringToParse.indexOf('*'));
+      if(stringToParse == '')
+      {
+        console.log("Error: only one instance of * found in ignore file at: " + ignoreContent[i]);
+        ignoreContent.splice(i,1);
+      } else{
         ignoreContent[i] = stringToParse;
         i++;
-      } catch(e){
-        console.log("Error: only one instance of * found in ignore file");
-        ignoreContent.splice(i,1);
       }
     }
     else if(stringToParse.substring(0,1) == '/'){
@@ -118,10 +121,11 @@ var parseIgnoreFile = function(){
     }
   }
   //DEBUG
-  console.log(JSON.stringify(ignoreContent, null, 2));
+  console.log("Parsed ignore file: \n" + JSON.stringify(ignoreContent, null, 2));
 }
 
 var ignoreThisPath = function(filepath) {
+  filepath = filepath.replace('//', '/');
   for (var i = 0; i < ignoreContent.length; i++) {
     var index = filepath.indexOf(ignoreContent[i]);
     if (index > -1) {
@@ -130,7 +134,7 @@ var ignoreThisPath = function(filepath) {
       }
       else {
         //DEBUG:
-        console.log("IGNORE: skipping file " + filepath);
+        //console.log("IGNORE: skipping file " + filepath);
         return true;
       }
     }
@@ -155,9 +159,9 @@ if (typeof process != 'undefined' && process.argv[2]) {
     fs.mkdirSync(reportdir);
     dive(argv.t, function(file, fullpath) {
       var ext = path.extname(file.toString());
-      // DEBUG
-      console.log("file to scan: " + fullpath);
       if(ext == '.js' && !ignoreThisPath(fullpath)) {
+        // DEBUG
+        //console.log("file to scan: " + fullpath);
         var content = fs.readFileSync(fullpath, 'utf8');
         //beautify source so result snippet is meaningful
         var content = beautify(content, { indent_size: 2 });
