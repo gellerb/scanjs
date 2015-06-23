@@ -1,0 +1,4 @@
+*node_modules*
+#enter anything within two wildcards
+#enter a full path of the form /full/path/to/file/or/directory
+#enter ./file/or/directory/path/here
