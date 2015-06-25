@@ -43,16 +43,6 @@ var dive = function(dir, action) {
   });
 };
 
-var filePathToFileNameForZip = function(filename) {
-  try {
-    // enables integration of JSON results and the vulnerable ZIP in the Web GUI, linking filenames to fullpaths
-    filename = filename.replace(/\\|\//g, "=");
-  } catch (e) {
-    console.log("ERROR: filepath could not be converted to a valid filename for the zip.");
-  }
-  return filename;
-};
-
 var writeReport = function(results, name) {
   if(fs.existsSync(name)) {
     console.log("ERROR: output file already exists (" + name + "). Supply a different name using: -o [filename]");
@@ -188,14 +178,17 @@ if (typeof process != 'undefined' && process.argv[2]) {
 
         var ast = parser.parse(content, { locations: true });
         var scanresult = ScanJS.scan(ast, fullpath);
-        if (scanresult.length > 0) {
-          if (scanresult[0]["type"] == 'error') {
+        var scanResultLen = scanresult.length-1;
+        while (scanResultLen >= 0) {
+          if (scanresult[scanResultLen]["type"] == 'error') {
             console.log("SKIPPING FILE: Error in " + fullpath + ", at Line " + scanresult.error.loc.line + ", Column " + scanresult.error.loc.column + ": " + scanresult.error.message);
           }
-          if (scanresult[0]["type"] == 'finding') {
-            var fileToZipName = filePathToFileNameForZip(scanresult.filename);
-            zip.file(fileToZipName, content);
+          if (scanresult[scanResultLen]["type"] == 'finding') {
+            scanresult[scanResultLen]["relativePath"] = "." + scanresult.filename.replace(argv.t, "");
+            var fileToZipName = scanresult[scanResultLen]["relativePath"].replace("./", "");
+            zip.file(fileToZipName, content, {createFolders: true});
           }
+          scanResultLen--;
         }
         results[fullpath] = scanresult;
       }

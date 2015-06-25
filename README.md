@@ -5,7 +5,7 @@ ScanJS
 
 ScanJS is a Static analysis tool for javascript code. ScanJS was created as an aid for security review, to help identify security issues in client-side web applications.
 
-ScanJS uses Acorn to convert sources to AST, then walks AST looking for source patterns. Use the rules file supplied, or load your own rules. 
+ScanJS uses Acorn to convert sources to AST, then walks AST looking for source patterns. Use the rules file supplied, or load your own rules.
 
 ScanJS Rules
 ------------------------
@@ -51,7 +51,7 @@ If you specify `$_unsafe` on the right hand side (e.g. foo.innerHTML=$_unsafe), 
 
 Tips:
 - Javascript is very dynamic, and this is navie approach: write conservative rules and review for false positives
-- One simple statement per rule, not complex statements (yet)! 
+- One simple statement per rule, not complex statements (yet)!
 - 'foo' does NOT match 'this.foo', if you are looking for something in global (e.g. 'alert()' ), you need to add two rules: 'alert.()' and '$_any.alert()'
 - Try the rule out in the experiment tab to test what it matches
 
@@ -74,34 +74,33 @@ Run ScanJS from the command line
 - ```scanner.js -t DIRECTORY_PATH```
 
 ##### Ignore files or directories from the command line scan #####
-- Run ```scanner.js -t DIRECTORY_PATH --ignore [ignoreFileName.scanjsignore]```
+- Run ```scanner.js -t DIRECTORY_PATH --ignore [ignore.scanjs]```
 
-Not providing an ignore file will default to the ignore file ```.scanjsignore```.
-The ignore file itself acccepts the following three inputs types, delineated by new lines:
+Not providing an ignore file will default to the ignore file ```.scanjsignore```. The ignore file acccepts the following three input formats:
 
-- ```./file/or/directory/path/here```
-- ```/full/path/to/file/or/directory```
-- ```*anything-between-two-wildcards*```
+```
+./relative/path/
+/full/path/
+*wildcard-match*
+```
 
 Any other input type will be ignored.
 
-##### Create a zip file containing vulnerable files #####
-- Run ```scanner.js -t DIRECTORY_PATH --zip```
+##### Create a zip file that contains the vulnerable files from the scanned results #####
+- ```scanner.js -t DIRECTORY_PATH --zip```
 
-A zip file containing vulnerable files will be saved with the same name as the ```.JSON``` results file. The files within the zip will be named with the convention: 
+A zip file containing the vulnerable files from the scanned results will be saved with the same name as the ```.JSON``` results file:
 
-- ```full=path=to=file=filename.extension```
+To preserve the full path when creating the zip file, directories will be created within the zip relative to the full path (provided in the command line interface).
 
 Testing instructions
 ------------------------
 Tests use the mocha testing framework.
 
-- `npm test` 
+- `npm test`
 - or in the browser:```http://127.0.0.1:4000/tests/```
 
 Tests are included in the rules declaration (see common/rules.json) by specifying the following two attributes, which are specified in the form of a series of javascript statements:
 
-- _testhit_: The rule should match each of these statements individualy. 
+- _testhit_: The rule should match each of these statements individualy.
 - _testmiss_: The rule should not match all of these statements.
-
-
