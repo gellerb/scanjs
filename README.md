@@ -73,6 +73,25 @@ Run ScanJS from the command line
 - Install [node.js](http://nodejs.org/)
 - ```scanner.js -t DIRECTORY_PATH```
 
+##### Ignore files or directories from the command line scan #####
+- Run ```scanner.js -t DIRECTORY_PATH --ignore [ignoreFileName.scanjsignore]```
+
+Not providing an ignore file will default to the ignore file ```.scanjsignore```.
+The ignore file itself acccepts the following three inputs types, delineated by new lines:
+
+- ```./file/or/directory/path/here```
+- ```/full/path/to/file/or/directory```
+- ```*anything-between-two-wildcards*```
+
+Any other input type will be ignored.
+
+##### Create a zip file containing vulnerable files #####
+- Run ```scanner.js -t DIRECTORY_PATH --zip```
+
+A zip file containing vulnerable files will be saved with the same name as the ```.JSON``` results file. The files within the zip will be named with the convention: 
+
+- ```full=path=to=file=filename.extension```
+
 Testing instructions
 ------------------------
 Tests use the mocha testing framework.
