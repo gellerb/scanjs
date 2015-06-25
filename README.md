@@ -89,9 +89,7 @@ Any other input type will be ignored.
 ##### Create a zip file that contains the vulnerable files from the scanned results #####
 - ```scanner.js -t DIRECTORY_PATH --zip```
 
-A zip file containing the vulnerable files from the scanned results will be saved with the same name as the ```.JSON``` results file:
-
-To preserve the full path when creating the zip file, directories will be created within the zip relative to the full path (provided in the command line interface).
+The created zip file will be saved with the same name as the ```.JSON``` results file.
 
 Testing instructions
 ------------------------
