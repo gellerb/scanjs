@@ -101,8 +101,8 @@ scanjsModule.controller('ScanCtrl', ['$scope', 'ScanSvc', function ScanCtrl($sco
     document.querySelector("#scan-output-nav").classList.toggle("active",true);
   }
 
-  $scope.fileNameToDirectoryLocation = function(filename) {
-    return filename.replace(/\=/g, "/");
+  $scope.fileNameToRelativePath = function(filename) {
+    return "./" + filename;
   }
 
   $scope.updateIssueList = function(){
@@ -283,14 +283,14 @@ scanjsModule.controller('ScanCtrl', ['$scope', 'ScanSvc', function ScanCtrl($sco
       $scope.codeMirror.setValue($scope.inputFiles[index].asText());
     }
     codeMirror_index = index;
-    document.querySelector("#filename-badge").textContent = $scope.fileNameToDirectoryLocation($scope.inputFiles[index].name);
+    document.querySelector("#filename-badge").textContent = $scope.fileNameToRelativePath($scope.inputFiles[index].name);
     $scope.codeMirror.setCursor(0,0);
     $scope.codeMirror.focus();
   }
 
   $scope.showResult = function (filename,line, col) {
     document.querySelector("#code-mirror-wrapper").classList.toggle("hidden",false);
-    document.querySelector("#filename-badge").textContent = $scope.fileNameToDirectoryLocation(filename);
+    document.querySelector("#filename-badge").textContent = $scope.fileNameToRelativePath(filename);
     var file = $scope.inputFiles.find(function(f){return f.name === filename});
     $scope.codeMirror.setValue(file.asText());
     $scope.codeMirror.setCursor(line - 1, col || 0);
@@ -311,7 +311,7 @@ scanjsModule.controller('ScanCtrl', ['$scope', 'ScanSvc', function ScanCtrl($sco
       $scope.results[i]["fullpath"] = $scope.results[i]["filename"];
       var temp = $scope.results[i]["filename"];
       if (temp !== null) {
-       $scope.results[i]["filename"] = temp.replace(/\\|\//g, "=");
+        $scope.results[i]["filename"] = $scope.results[i]["relativePath"].replace("./", "");
       }
     }
   }

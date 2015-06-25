@@ -29,7 +29,7 @@
                     <p class="bg-info">Files</p>
                     <ul>
                         <li ng-repeat="file in inputFiles">
-                             <a title="{{fileNameToDirectoryLocation(file.name)}}" ng-click="navShowOutput(file)">{{fileNameToDirectoryLocation(file.name)}}</a>
+                             <a title="{{fileNameToRelativePath(file.name)}}" ng-click="navShowOutput(file)">{{fileNameToRelativePath(file.name)}}</a>
                         </li>
                     </ul>
                 </div>
@@ -61,7 +61,7 @@
                         </thead>
                         <tbody>
                         <tr ng-repeat="file in inputFiles track by $index">
-                            <td><a ng-click="showFile($index)" title="Examine file in preview">{{fileNameToDirectoryLocation(file.name)}}</a>
+                            <td><a ng-click="showFile($index)" title="Examine file in preview">{{fileNameToRelativePath(file.name)}}</a>
                             </td>
                             <td><input type="checkbox" id="doScan_{{ $index }}"
                                        title="Set this checkbox if you want the file included in your scans" checked/></td>
@@ -69,6 +69,7 @@
                         </tbody>
                     </table>
                 </div>
+                <h4>Choose files to load</h4>
                 <p>Select a .JSON file containing the results from a CLI scan.</p>
                 <input type="file" id="load-file-input" single></p>
                 <div id="load-file-selected" class="hidden">
@@ -86,7 +87,7 @@
                             </thead>
                             <tbody>
                             <tr ng-repeat="file in inputFiles track by $index">
-                                <td><a ng-click="showFile($index)" title="Examine file in preview">{{fileNameToDirectoryLocation(file.name)}}</a>
+                                <td><a ng-click="showFile($index)" title="Examine file in preview">{{fileNameToRelativePath(file.name)}}</a>
                                 </td>
                             </tr>
                             </tbody>
@@ -112,7 +113,7 @@
                     </tr>
                     </thead>
                     <tr ng-repeat='result in filteredResults| orderBy:predicate:reverse' title={{result.rule.rec}}>
-                         <td>{{fileNameToDirectoryLocation(result.filename)}}</td>
+                         <td>{{fileNameToRelativePath(result.filename)}}</td>
                         <td><a ng-click="showResult(result.filename,result.line, result.col)">Line {{result.line}}</a></td>
                         <td>{{result.rule.name }}</td>
                         <!-- <td>{{result.rule.desc}}</a>-->
@@ -132,7 +133,7 @@
                     </tr>
                     </thead>
                     <tr ng-repeat='error in errors| orderBy:predicate_e:reverse'>
-                        <td>{{ fileNameToDirectoryLocation(error.filename) }}</td>
+                        <td>{{ fileNameToRelativePath(error.filename) }}</td>
                         <td><a ng-click="showResult(error.filename, error.loc.line, error.loc.col)">Line {{error.loc.line }}</a></td>
                         <td>{{ error.name }}</td>
                         <td>{{ error.message }}</td>

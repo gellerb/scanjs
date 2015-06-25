@@ -51,7 +51,7 @@ If you specify `$_unsafe` on the right hand side (e.g. foo.innerHTML=$_unsafe), 
 
 Tips:
 - Javascript is very dynamic, and this is navie approach: write conservative rules and review for false positives
-- One simple statement per rule, not complex statements (yet)! 
+- One simple statement per rule, not complex statements (yet)!
 - 'foo' does NOT match 'this.foo', if you are looking for something in global (e.g. 'alert()' ), you need to add two rules: 'alert.()' and '$_any.alert()'
 - Try the rule out in the experiment tab to test what it matches
 
@@ -67,6 +67,10 @@ Run ScanJS in the browser
 - Install [node.js](http://nodejs.org/)
 - ```nodejs server.js```
 - Navigate to http://127.0.0.1:4000/client/ or see our [example page](http://mozilla.github.io/scanjs/client/)
+
+The browser supports scanning files or uploading the results from command line scans.
+
+- When choosing a file to _load_, first upload the ```.JSON``` results file from the command line scan. Next, upload the ```.zip``` file corresponding to the JSON scan, containing the vulnerable files.
 
 Run ScanJS from the command line
 ------------------------
